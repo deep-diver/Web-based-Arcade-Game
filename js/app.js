@@ -2,8 +2,12 @@ const blockHeight = 83;
 const blockWidth = 101;
 const blockHeightQuarter = 83/4;
 
+let enemyCount = 0;
+
 // Enemies our player must avoid
-var Enemy = function(x, y) {
+var Enemy = function(index, x, y) {
+    this.index = index;
+
     this.x = x;
     this.y = y;
 
@@ -13,8 +17,19 @@ var Enemy = function(x, y) {
 };
 
 Enemy.prototype.update = function(dt) {
-    // console.log(dt);
     this.x++;
+
+    //horizontal collision
+    if ((this.x + blockWidth >= player.x) && (this.x < player.x + blockWidth) &&
+        (this.y === player.y)) {
+      console.log("enemy x: " + this.x + ", player x: " + player.x)
+    }
+
+    //when enemy goes off the screen
+    if (this.x > blockWidth * 5) {
+      allEnemies.splice(this.index, 0);
+      allToBeDeletedEnemies.push(this);
+    }
 };
 
 // Draw the enemy on the screen, required method for game
@@ -22,15 +37,21 @@ Enemy.prototype.render = function() {
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
 };
 
-var allEnemies = [];
+let allEnemies = [];
+let allToBeDeletedEnemies = [];
 
 myVar = setInterval(function() {
     const row = Math.floor(Math.random() * 3) + 1;
     const yLocation = blockHeight * row - blockHeightQuarter;
 
-    let newEnemy = new Enemy(0, yLocation);
-
+    let newEnemy = new Enemy(enemyCount++, 0, yLocation);
     allEnemies.push(newEnemy);
+
+    // release memory of enemies off the screen
+    for (let idx = 0; idx < allToBeDeletedEnemies.length; idx++) {
+      allToBeDeletedEnemies[idx] = null;
+      allToBeDeletedEnemies.splice(idx, 0);
+    }
 }, 3000);
 
 // Now write your own player class
@@ -78,8 +99,6 @@ Player.prototype.handleInput = function(key) {
 };
 
 var player = new Player(0, blockHeight * 5 - blockHeightQuarter,'char-boy');
-
-
 
 document.addEventListener('keyup', function(e) {
     var allowedKeys = {
