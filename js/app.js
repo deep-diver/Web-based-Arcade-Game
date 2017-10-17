@@ -1,8 +1,24 @@
-const blockHeight = 83;
-const blockWidth = 101;
-const blockHeightQuarter = 83/4;
+const BLOCK_HEIGHT = 83;
+const BLOCK_WIDTH = 101;
+const BLOCK_HEIGHT_QUARTER = 83/4;
+const MAX_SCORE = 5;
+const MAX_HP = 5;
+
+const characters = [
+    "char-boy",
+    "char-cat-girl",
+    "char-horn-girl",
+    "char-pink-girl",
+    "char-princess-girl"
+];
 
 let enemyCount = 0;
+
+let allEnemies = [];
+let allToBeDeletedEnemies = [];
+
+let allStars = [];
+let allHearts = [];
 
 // Enemies our player must avoid
 var Enemy = function(index, x, y) {
@@ -20,13 +36,15 @@ Enemy.prototype.update = function(dt) {
     this.x++;
 
     //horizontal collision
-    if ((this.x + blockWidth >= player.x) && (this.x < player.x + blockWidth) &&
+    if ((this.x + BLOCK_WIDTH >= player.x) && (this.x < player.x + BLOCK_WIDTH) &&
         (this.y === player.y)) {
-      console.log("enemy x: " + this.x + ", player x: " + player.x)
+        player.hp = player.hp - 1;
+        player.x = 0;
+        player.y = BLOCK_HEIGHT * 5 - BLOCK_HEIGHT_QUARTER;
     }
 
     //when enemy goes off the screen
-    if (this.x > blockWidth * 5) {
+    if (this.x > BLOCK_WIDTH * 5) {
       allEnemies.splice(this.index, 0);
       allToBeDeletedEnemies.push(this);
     }
@@ -37,12 +55,9 @@ Enemy.prototype.render = function() {
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
 };
 
-let allEnemies = [];
-let allToBeDeletedEnemies = [];
-
 myVar = setInterval(function() {
-    const row = Math.floor(Math.random() * 3) + 1;
-    const yLocation = blockHeight * row - blockHeightQuarter;
+    const row = Math.floor(Math.random() * 3) + 2;
+    const yLocation = BLOCK_HEIGHT * row - BLOCK_HEIGHT_QUARTER;
 
     let newEnemy = new Enemy(enemyCount++, 0, yLocation);
     allEnemies.push(newEnemy);
@@ -54,54 +69,138 @@ myVar = setInterval(function() {
     }
 }, 3000);
 
-// Now write your own player class
-// This class requires an update(), render() and
-// a handleInput() method.
+// Extra class
+var Star = function(index) {
+    this.x = index * BLOCK_WIDTH;
+    this.y = -BLOCK_HEIGHT_QUARTER;
 
-var Player = function(x, y, character) {
+    this.sprite = 'images/Star.png';
+}
+
+Star.prototype.render = function() {
+    ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+}
+
+var Heart = function(index) {
+    this.x = index * BLOCK_WIDTH;
+    this.y = BLOCK_HEIGHT*8 - BLOCK_HEIGHT_QUARTER;
+
+    this.sprite = 'images/Heart.png';
+}
+
+Heart.prototype.render = function() {
+    ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+}
+
+var Player = function(x, y, characterIndex) {
     this.x = x;
     this.y = y;
 
-    this.sprite = 'images/' + character + '.png';
+    this.characterIndex = characterIndex;
+    this.character = characters[characterIndex];
+    this.isInitStatus = true;
+
+    this.score = 0;
+    this.hp = MAX_HP;
+
+    this.sprite = 'images/' + this.character + '.png';
+    this.chooseSprite = 'images/Selector.png';
+    this.heartSprite = 'images/Heart.png';
 };
 
 Player.prototype.update = function() {
+    //reached water block
+    if (this.y <= BLOCK_HEIGHT) {
+        allStars.push(new Star(this.score++));
+        
+        this.x = 0;
+        this.y = BLOCK_HEIGHT * 5 - BLOCK_HEIGHT_QUARTER;
 
+        if (this.score == MAX_SCORE) {
+            alert("You successfully cleared the game! now, back to the beginning!");
+            player.score = 0;
+            player.hp = MAX_HP;
+
+            player.isInitStatus = true;
+            player.x = 0;
+            player.y = BLOCK_HEIGHT * 6 - BLOCK_HEIGHT_QUARTER;
+
+        }
+    }
 };
 
 Player.prototype.render = function() {
+    if (this.isInitStatus) {
+        ctx.drawImage(Resources.get(this.chooseSprite), this.x, this.y - BLOCK_HEIGHT_QUARTER);
+    }
+
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+
+    for (let i = 0; i < this.hp; i++) {
+        ctx.drawImage(Resources.get(this.heartSprite), BLOCK_WIDTH * i, BLOCK_HEIGHT*8 - BLOCK_HEIGHT_QUARTER);
+    }
 };
+
+Player.prototype.changeCharacter = function(characterIndex) {
+    this.characterIndex = characterIndex;
+    this.character = characters[characterIndex];
+    this.sprite = 'images/' + this.character + '.png';
+};
+
+Player.prototyp
 
 Player.prototype.handleInput = function(key) {
-    if (key == 'up') {
-        if (this.y - blockHeight >= -blockHeightQuarter) {
-            this.y -= blockHeight;
+    if (!this.isInitStatus) {
+        if (key == 'up') {
+            if (this.y - BLOCK_HEIGHT >= -BLOCK_HEIGHT_QUARTER) {
+                this.y -= BLOCK_HEIGHT;
+            }
+        }
+        else if (key == 'down') {
+            if (this.y + BLOCK_HEIGHT <= BLOCK_HEIGHT*6 -BLOCK_HEIGHT_QUARTER) {
+                this.y += BLOCK_HEIGHT;
+            }
+        }
+        else if (key == 'left') {
+            if (this.x - BLOCK_WIDTH >= 0) {
+                this.x -= BLOCK_WIDTH;
+            }
+        }
+        else if (key == 'right') {
+            if (this.x + BLOCK_WIDTH <= BLOCK_WIDTH*4) {
+                this.x += BLOCK_WIDTH;
+            }
         }
     }
-    else if (key == 'down') {
-        if (this.y + blockHeight <= blockHeight*5 -blockHeightQuarter) {
-            this.y += blockHeight;
-        }
-    }
-    else if (key == 'left') {
-        if (this.x - blockWidth >= 0) {
-            this.x -= blockWidth;
-        }
-    }
-    else if (key == 'right') {
-        if (this.x + blockWidth <= blockWidth*4) {
-            this.x += blockWidth;
-        }
-    }
+    else {
+        if (key == 'left') {
+            let prevIndex = this.characterIndex - 1;
+            if (prevIndex < 0) {
+                prevIndex = characters.length-1;
+            }
 
-    console.log('x : ' + this.x + ", y : " + this.y);
+            this.changeCharacter(prevIndex);
+        }
+        else if (key == 'right') {
+            let nextIndex = this.characterIndex + 1;
+            if (nextIndex >= characters.length) {
+                nextIndex = 0;
+            }
+
+            this.changeCharacter(nextIndex);
+        }        
+        else if (key == 'enter') {
+            this.isInitStatus = false;
+        }
+    }
 };
 
-var player = new Player(0, blockHeight * 5 - blockHeightQuarter,'char-boy');
+var player = new Player(0, BLOCK_HEIGHT * 6 - BLOCK_HEIGHT_QUARTER, 0);
 
+// Key Event Listener
 document.addEventListener('keyup', function(e) {
     var allowedKeys = {
+        13: 'enter',
         37: 'left',
         38: 'up',
         39: 'right',
