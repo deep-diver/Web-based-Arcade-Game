@@ -41,12 +41,13 @@ Enemy.prototype.update = function(dt) {
         player.hp = player.hp - 1;
         player.x = 0;
         player.y = BLOCK_HEIGHT * 5 - BLOCK_HEIGHT_QUARTER;
+
+        allHearts.pop();
     }
 
     //when enemy goes off the screen
     if (this.x > BLOCK_WIDTH * 5) {
       allEnemies.splice(this.index, 0);
-      allToBeDeletedEnemies.push(this);
     }
 };
 
@@ -56,40 +57,34 @@ Enemy.prototype.render = function() {
 };
 
 myVar = setInterval(function() {
-    const row = Math.floor(Math.random() * 3) + 2;
+    const row = Math.floor(Math.random() * 3) + 1;
     const yLocation = BLOCK_HEIGHT * row - BLOCK_HEIGHT_QUARTER;
 
     let newEnemy = new Enemy(enemyCount++, 0, yLocation);
     allEnemies.push(newEnemy);
-
-    // release memory of enemies off the screen
-    for (let idx = 0; idx < allToBeDeletedEnemies.length; idx++) {
-      allToBeDeletedEnemies[idx] = null;
-      allToBeDeletedEnemies.splice(idx, 0);
-    }
 }, 3000);
 
 // Extra class
 var Star = function(index) {
-    this.x = index * BLOCK_WIDTH;
-    this.y = -BLOCK_HEIGHT_QUARTER;
+    this.x = index * BLOCK_WIDTH/4;
+    this.y = BLOCK_HEIGHT*6 + BLOCK_HEIGHT_QUARTER*2;
 
     this.sprite = 'images/Star.png';
 }
 
 Star.prototype.render = function() {
-    ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+    ctx.drawImage(Resources.get(this.sprite), this.x, this.y, BLOCK_WIDTH/4, BLOCK_HEIGHT/2);
 }
 
 var Heart = function(index) {
-    this.x = index * BLOCK_WIDTH;
-    this.y = BLOCK_HEIGHT*8 - BLOCK_HEIGHT_QUARTER;
+    this.x = (BLOCK_WIDTH*4 - BLOCK_WIDTH/4) + (index * BLOCK_WIDTH/4);
+    this.y = BLOCK_HEIGHT*6 + BLOCK_HEIGHT_QUARTER*2;
 
     this.sprite = 'images/Heart.png';
 }
 
 Heart.prototype.render = function() {
-    ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+    ctx.drawImage(Resources.get(this.sprite), this.x, this.y, BLOCK_WIDTH/4, BLOCK_HEIGHT/2);
 }
 
 var Player = function(x, y, characterIndex) {
@@ -105,12 +100,15 @@ var Player = function(x, y, characterIndex) {
 
     this.sprite = 'images/' + this.character + '.png';
     this.chooseSprite = 'images/Selector.png';
-    this.heartSprite = 'images/Heart.png';
+
+    for (let i = 0; i < this.hp; i++) {
+        allHearts.push(new Heart(i));
+    }
 };
 
 Player.prototype.update = function() {
     //reached water block
-    if (this.y <= BLOCK_HEIGHT) {
+    if (this.y <= 0) {
         allStars.push(new Star(this.score++));
         
         this.x = 0;
@@ -123,9 +121,35 @@ Player.prototype.update = function() {
 
             player.isInitStatus = true;
             player.x = 0;
-            player.y = BLOCK_HEIGHT * 6 - BLOCK_HEIGHT_QUARTER;
+            player.y = BLOCK_HEIGHT * 5 - BLOCK_HEIGHT_QUARTER;
 
+            allHearts = [];
+
+            for (let i = 0; i < this.hp; i++) {
+                allHearts.push(new Heart(i));
+            }    
+
+            allStars = [];
         }
+    }
+
+    if (this.hp == 0) {
+        alert("game over!");
+
+        player.score = 0;
+        player.hp = MAX_HP;
+
+        player.isInitStatus = true;
+        player.x = 0;
+        player.y = BLOCK_HEIGHT * 5 - BLOCK_HEIGHT_QUARTER;
+
+        allHearts = [];
+
+        for (let i = 0; i < this.hp; i++) {
+            allHearts.push(new Heart(i));
+        }
+
+        allStars = [];
     }
 };
 
@@ -135,10 +159,6 @@ Player.prototype.render = function() {
     }
 
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
-
-    for (let i = 0; i < this.hp; i++) {
-        ctx.drawImage(Resources.get(this.heartSprite), BLOCK_WIDTH * i, BLOCK_HEIGHT*8 - BLOCK_HEIGHT_QUARTER);
-    }
 };
 
 Player.prototype.changeCharacter = function(characterIndex) {
@@ -157,7 +177,7 @@ Player.prototype.handleInput = function(key) {
             }
         }
         else if (key == 'down') {
-            if (this.y + BLOCK_HEIGHT <= BLOCK_HEIGHT*6 -BLOCK_HEIGHT_QUARTER) {
+            if (this.y + BLOCK_HEIGHT <= BLOCK_HEIGHT*5 -BLOCK_HEIGHT_QUARTER) {
                 this.y += BLOCK_HEIGHT;
             }
         }
@@ -195,7 +215,7 @@ Player.prototype.handleInput = function(key) {
     }
 };
 
-var player = new Player(0, BLOCK_HEIGHT * 6 - BLOCK_HEIGHT_QUARTER, 0);
+var player = new Player(0, BLOCK_HEIGHT * 5 - BLOCK_HEIGHT_QUARTER, 0);
 
 // Key Event Listener
 document.addEventListener('keyup', function(e) {
