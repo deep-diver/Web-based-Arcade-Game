@@ -1,7 +1,7 @@
 # Classical Arcade Game
 ===============================
 
-## Contents
+## Table of Contents
 - Overview  
 - Functions
 - Dependencies
@@ -10,7 +10,7 @@
 
 ## Overview
 
-<img src="capture1.png" alt="capture" width="300"/>
+![](/capture1.PNG)
 
 - This is part of Udacity's FEWD-ND (Front End Web Developer Nanodegree) 's assignments.
 - This is a simple classical arcade game.
